@@ -10,8 +10,6 @@ import android.support.v4.app.NotificationCompat;
 import android.text.TextUtils;
 import android.util.Log;
 
-import com.wewins.custom.forutils.R;
-
 /**
  * 被NotifyManager控制
  * <br/>
@@ -61,12 +59,25 @@ public class NotifyCompatYc {
         setONotifyChannel(manager,null,channeId,channelName);
     }
 
-    public static Notification getNotification(Context context, String channelId) {
+    public static Notification getNotification(Context context, String channelId, int iconId) {
+        int priority;
+        String category;
+        if(Build.VERSION.SDK_INT >= 24) {
+            priority = NotificationManager.IMPORTANCE_MIN;
+        } else {
+            priority = 1;
+        }
+        if(Build.VERSION.SDK_INT >= 21) {
+            category = Notification.CATEGORY_SERVICE;
+        } else {
+            category = "service";
+        }
+
         NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(context, channelId);
         Notification notification = notificationBuilder.setOngoing(true)
-                .setSmallIcon(R.mipmap.ic_launcher)
-                .setPriority(NotificationManager.IMPORTANCE_MIN)
-                .setCategory(Notification.CATEGORY_SERVICE)
+                .setSmallIcon(iconId)
+                .setPriority(priority)
+                .setCategory(category)
                 .build();
         return notification;
     }

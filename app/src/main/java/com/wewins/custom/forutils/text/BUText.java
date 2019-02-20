@@ -2,6 +2,7 @@ package com.wewins.custom.forutils.text;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.res.AssetManager;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
@@ -25,12 +26,18 @@ import com.wewins.custom.forutils.BUBase;
 
 import org.apache.http.util.EncodingUtils;
 
+import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-
+/**
+ * 文字工具
+ */
 public class BUText extends BUBase {
 
     ////////////////////////////////////////////////////////////////////////////////
@@ -78,12 +85,36 @@ public class BUText extends BUBase {
     ////////////////////////////////////////////////////////////////////////////////
     private static Map<String, Typeface> typefaces;
 
+    /**
+     * 添加问价目录下的字体文件到内存中
+     * @param context
+     * @param dirFullPathInAsset
+     * @return
+     * @throws IOException
+     */
+    public static final  List<String> cacheTypefaces(Activity context, String dirFullPathInAsset) throws IOException {
+        AssetManager am = context.getResources().getAssets();
+        String[] listFiles = am.list(dirFullPathInAsset);// 遍历该目录下的文件和文件夹名
+        List<String> keys = new ArrayList<>();
+        int count = 0;
+        for (String string : listFiles) {// 判断目录是文件还是文件夹，这里只好用.做区分了
+            if(string.endsWith(".ttf") || string.endsWith(".otf")) {
+                String key = cacheTypeface(context, dirFullPathInAsset + File.separator + string);
+                if(key != null) {
+                    keys.add(key);
+                }
+            }
+        }
+        return keys;
+    }
+
     /** 添加字体到静态存储区*/
-    public static final String addTypeface(Activity context, String filePathInAsset) {
+    public static final String cacheTypeface(Activity context, String filePathInAsset) {
         String key = filePathInAsset.substring(filePathInAsset.lastIndexOf("/") + 1);
+        key = key.substring(key.lastIndexOf(".") + 1);
         Typeface typeface = createTypeface(context, filePathInAsset);
         if(typeface != null) {
-            addTypeface(key, typeface);
+            cacheTypeface(key, typeface);
         } else {
             key = null;
         }
@@ -91,7 +122,7 @@ public class BUText extends BUBase {
     }
 
     /** 添加字体到静态存储区*/
-    public static final void addTypeface(String key, Typeface typeface) {
+    public static final void cacheTypeface(String key, Typeface typeface) {
         if(typefaces == null) {
             typefaces = new HashMap<>();
         }

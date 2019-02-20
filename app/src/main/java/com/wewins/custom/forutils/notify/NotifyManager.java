@@ -5,10 +5,9 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.NotificationCompat;
-
-import com.wewins.custom.forutils.R;
 
 /**
  * 控制NotifyCompatYc
@@ -20,15 +19,15 @@ public class NotifyManager {
     // 单例开始
     private volatile static NotifyManager INSTANCE;
 
-    private NotifyManager(Context context, Class<?> c) {
-        initNotifyManager(context, c);
+    private NotifyManager(Context context, Class<?> c, int iconId) {
+        initNotifyManager(context, c, iconId);
     }
 
-    public static NotifyManager getInstance(Context context, Class<?> c) {
+    public static NotifyManager getInstance(Context context, Class<?> c, int iconId) {
         if (INSTANCE == null) {
             synchronized (NotifyManager.class) {
                 if (INSTANCE == null) {
-                    INSTANCE = new NotifyManager(context, c);
+                    INSTANCE = new NotifyManager(context, c, iconId);
                 }
             }
         }
@@ -42,7 +41,7 @@ public class NotifyManager {
     private NotificationCompat.Builder builder;
 
     //初始化通知栏配置
-    private void initNotifyManager(Context context, Class<?> c) {
+    private void initNotifyManager(Context context, Class<?> c, int iconId) {
         context = context.getApplicationContext();
         manager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
         // 如果存在则清除上一个消息
@@ -58,13 +57,17 @@ public class NotifyManager {
         // 什么时候提醒的
         builder.setWhen(System.currentTimeMillis());
         // 设置通知栏的优先级
-        builder.setPriority(Notification.PRIORITY_DEFAULT);
+        if(Build.VERSION.SDK_INT >= 16) {
+            builder.setPriority(Notification.PRIORITY_DEFAULT);
+        } else {
+            builder.setPriority(0);
+        }
         // 设置点击可消失
         builder.setAutoCancel(true);
         // 设置是否震动等
         builder.setDefaults(Notification.DEFAULT_VIBRATE);
         // 设置icon
-        builder.setSmallIcon(R.mipmap.ic_launcher);
+        builder.setSmallIcon(iconId);
         // 设置点击意图
         Intent intent = new Intent(context, c);
         Bundle bundle = new Bundle();
