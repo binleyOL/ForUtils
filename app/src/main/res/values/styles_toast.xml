@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+
+    <!--Toast 进入和退出的动画-->
+
     <style name="custom.animation.toast" parent="@android:style/Animation.Toast">
         <item name="android:windowEnterAnimation">@anim/toast_enter</item>
         <item name="android:windowExitAnimation">@anim/toast_exit</item>
@@ -14,4 +17,5 @@
         <item name="android:windowEnterAnimation">@anim/toast_translate_simple_enter</item>
         <item name="android:windowExitAnimation">@anim/toast_translate_simple_exit</item>
     </style>
+
 </resources>

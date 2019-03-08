@@ -10,6 +10,7 @@ import android.content.pm.PackageManager;
  */
 public class BUApkVersionCode {
 
+    /** [版本号, 版本名称]*/
     private static String[] version = new String[2];
 
     private BUApkVersionCode() {
@@ -22,7 +23,7 @@ public class BUApkVersionCode {
      * @return 版本号
      */
     public static int getVersionCode(Context context) {
-        int versionCode = 0;
+        int versionCode;
         if(version == null) {
             initVersion(context);
         }

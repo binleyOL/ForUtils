@@ -87,7 +87,6 @@ public class BUSaveLocalize {
 		return PreferenceManager.getDefaultSharedPreferences(context);
 	}
 
-
     /** 获取用于方法save(Context context, Map<String, Object> map)方法的map*/
     public static Map<String, Object> getSavingMap(Object...obj) {
         int length = obj.length;

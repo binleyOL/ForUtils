@@ -1,8 +1,8 @@
 package com.wewins.custom.forutils.toast;
 
 import android.content.Context;
-import android.graphics.Color;
 import android.graphics.PixelFormat;
+import android.os.Handler;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -23,17 +23,26 @@ import java.util.TimerTask;
  */
 public class BToast {
 
-    private static BToast instance; //单例的
-    private View mToastView;//自定义toast view
+    private static BToast instance;//单例
+    /** 自定义toast view的根View*/
+    private View mToastView;
+    /** 文本*/
     private TextView mTextView;
-    private Boolean mIsShow;//记录状态 是否在显示
-    private Timer mTimer;//定时器
-    private WindowManager.LayoutParams mParams;//布局参数
-    private int mShowTime = Toast.LENGTH_SHORT;//显示延时时间
-    private int[] mGravity = new int[3];//显示位置改变
-    private String mText;
+    /** 记录状态 是否在显示。true=已显示*/
+    private Boolean mIsShowing;
+    /** 定时器：显示后开始计时，时间到了后，隐藏Toast*/
+    private Timer mTimer;
+    /** Toast的布局参数*/
+    private WindowManager.LayoutParams mParams;
+    private WindowManager mWdm;
+    private Handler mHandle;
 
-    public WindowManager mWdm;
+    /** 显示延时时间*/
+    private int mShowTime = Toast.LENGTH_SHORT;
+    private String mText;
+    private float textSize;
+    /** 显示位置*/
+    private int[] mGravity = new int[3];
 
     public synchronized static BToast getInstance(Context context) {
         if (instance == null)
@@ -42,19 +51,21 @@ public class BToast {
     }
 
     private BToast(Context context) {
-        mIsShow = false;// 记录当前Toast的内容是否已经在显示
+        mIsShowing = false;// 记录当前Toast的内容是否已经在显示
         // WindowManager
         mWdm = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
         // 这里初始化toast view
         mToastView = LayoutInflater.from(context).inflate(R.layout.common_toast, null);
         LinearLayout ll = mToastView.findViewById(R.id.rootView);
         mTextView = ToastText.getText(context);//用来提示的文字
-        mTextView.setTextSize(16);
+        textSize = 16;
         ll.addView(mTextView);
         // 初始化计数器
         mTimer = new Timer();
         // 设置布局参数
         setParams();
+        // 同步到主线程
+        mHandle = new Handler();
     }
 
     /** 设置布局参数*/
@@ -77,34 +88,35 @@ public class BToast {
         return new TimerTask() {
             @Override
             public void run() {
-//                BaseAppliaction.mWdm.removeView(mToastView);
-                mWdm.removeView(mToastView);
-                mIsShow = false;
+                mHandle.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        mWdm.removeView(mToastView);
+                        mIsShowing = false;
+                    }
+                });
             }
         };
     }
 
-    /** 自定义View。展示没用到*/
-    private View customView(Context context, CharSequence text){
-        LinearLayout toastView = new LinearLayout(context);
-        toastView.setOrientation(LinearLayout.VERTICAL);
-        toastView.setBackgroundResource(R.drawable.bg_common_toast);
-        TextView textView = new TextView(context);
-        textView.setText(text);
-        textView.setTextColor(Color.parseColor("#ff000000"));
-        textView.setTextSize(14);
-        textView.setPadding(20,5,20,5);
-        toastView.addView(textView, 0);
-        mToastView = toastView;
-        mTextView = textView;
-        return toastView;
-    }
-
-    /** 设置布局位置*/
+    /**
+     * 设置布局位置
+     * @param gravity
+     * @param xOffset
+     * @param yOffset
+     */
     public final void setGravity(int gravity, int xOffset, int yOffset) {
         mParams.gravity = gravity;
         mParams.x = xOffset;
         mParams.y = yOffset;
+    }
+
+    /**
+     * 设置文字大小
+     * @param textSize 单位sp
+     */
+    public void setTextSize(float textSize) {
+        this.textSize = textSize;
     }
 
     /**
@@ -121,15 +133,17 @@ public class BToast {
         mShowTime = duration;
     }
 
+    /**
+     * 隐藏
+     */
     public void dismiss() {
         // 取消计时器
         if (mTimer != null) {
             mTimer.cancel();
             mTimer = new Timer();
         }
-//        BaseAppliaction.mWdm.removeView(mToastView);
         mWdm.removeView(mToastView);
-        mIsShow = false;
+        mIsShowing = false;
     }
 
     /** 显示*/
@@ -138,7 +152,7 @@ public class BToast {
             // 未初始化，终止后续内容执行
             return;
         }
-        if (mIsShow) {
+        if (mIsShowing) {
             // 取消计时器
             if (mTimer != null) {
                 mTimer.cancel();
@@ -146,21 +160,20 @@ public class BToast {
             }
             // 如果Toast已经在显示，但是Gravity相关参数改变
             if(mGravity[0] != mParams.gravity || mGravity[1] != mParams.x || mGravity[2] != mParams.y) {
-//                BaseAppliaction.mWdm.removeView(mToastView);
                 mWdm.removeView(mToastView);
                 // 记录Gravity相关信息
                 mGravity[0] = mParams.gravity;
                 mGravity[1] = mParams.x;
                 mGravity[2] = mParams.y;
                 // 将其加载到windowManager上
-//                BaseAppliaction.mWdm.addView(mToastView, mParams);
                 mWdm.addView(mToastView, mParams);
             }
+            mText = text;
+            mTextView.setTextSize(textSize);
             // 设置显示内容
             if(!mText.equals(text)) {
                 mTextView.setText(text);
             }
-            mText = text;
         } else {
             // 记录Gravity相关信息
             mGravity[0] = mParams.gravity;
@@ -168,11 +181,11 @@ public class BToast {
             mGravity[2] = mParams.y;
             // 设置显示内容
             mText = text;
+            mTextView.setTextSize(textSize);
             mTextView.setText(text);
             // 设置显示状态
-            mIsShow = true;
+            mIsShowing = true;
             // 将其加载到windowManager上
-//            BaseAppliaction.mWdm.addView(mToastView, mParams);
             mWdm.addView(mToastView, mParams);
         }
         // 设置计时器

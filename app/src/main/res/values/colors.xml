@@ -115,7 +115,6 @@
     <color name="oliveDrab">#6B8E23</color><!--深绿褐色 -->
     <color name="slateBlue">#6A5ACD</color><!--石蓝色 -->
     <color name="dimGray">#696969</color><!--暗灰色 -->
-    <color name="dimGrey">#696969</color><!--暗灰色 -->
     <color name="mediumAquamarine">#66CDAA</color><!--中绿色-->
     <color name="cornflowerBlue">#6495ED</color><!--菊兰色 -->
     <color name="cadetBlue">#5F9EA0</color><!--军兰色 -->
@@ -129,7 +128,6 @@
     <color name="mediumSeaGreen">#3CB371</color><!--中海蓝 -->
     <color name="limeGreen">#32CD32</color><!--橙绿色 -->
     <color name="darkSlateGray">#2F4F4F</color><!--暗瓦灰色 -->
-    <color name="darkSlateGrey">#2F4F4F</color><!--暗瓦灰色 -->
     <color name="seaGreen">#2E8B57</color><!--海绿色 -->
     <color name="forestGreen">#228B22</color><!--森林绿 -->
     <color name="lightSeaGreen">#20B2AA</color><!--亮海蓝色 -->
