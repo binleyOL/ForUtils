@@ -44,8 +44,10 @@ public class KeyboardHelper {
         if (delta <= getNavBarHeight()) {
             // 被遮挡的高 <= 底部导航高
             sDecorViewDelta = delta;
+            BULog.d("1sDecorViewDelta="+sDecorViewDelta);
             return 0;
         }
+        BULog.d("2sDecorViewDelta="+sDecorViewDelta);
         return delta - sDecorViewDelta;
     }
 
@@ -61,7 +63,7 @@ public class KeyboardHelper {
     }
 
     /** 获取Activity底层View*/
-    private static final FrameLayout getActivityContentView(Activity activity) {
+    public static final FrameLayout getActivityContentView(Activity activity) {
         return activity.findViewById(android.R.id.content);
     }
 
@@ -71,11 +73,26 @@ public class KeyboardHelper {
      * @param listener The soft input changed listener.
      */
     public static void registerSoftInputChangedListener(final Activity activity, final OnSoftInputChangedListener listener) {
+        registerSoftInputChangedListener(activity, null, listener);
+    }
+
+    /**
+     * 为View注册软键盘改变监听器
+      * @param activity The activity.
+     * @param view
+     * @param listener The soft input changed listener.
+     */
+    public static void registerSoftInputChangedListener(final Activity activity, View view, final OnSoftInputChangedListener listener) {
         final int flags = activity.getWindow().getAttributes().flags;
         if ((flags & WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS) != 0) {
             activity.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
         }
-        final FrameLayout contentView = getActivityContentView(activity);
+        View contentView;
+        if(view == null) {
+            contentView = getActivityContentView(activity);
+        } else {
+            contentView = view;
+        }
         iDecorViewInvisibleHeightPre = getDecorViewInvisibleHeight(activity);
         BULog.d("初始iDecorViewInvisibleHeightPre="+iDecorViewInvisibleHeightPre);
         onSoftInputChangedListener = listener;
@@ -98,24 +115,29 @@ public class KeyboardHelper {
         BULog.d("添加键盘监控");
     }
 
-    /** 移除监测键盘*/
-    public static void removeLayoutChangeListener(View decorView){
+    /** 移除软键盘的监测键盘*/
+    public static void removeLayoutChangeListener(Activity activity){
         BULog.d("移除键盘监控");
-        View contentView = decorView.findViewById(android.R.id.content);
+        View contentView = activity.findViewById(android.R.id.content);
+        removeLayoutChangeListener(contentView);
+    }
+
+    /** 移除View的软键盘的监测键盘*/
+    public static void removeLayoutChangeListener(View contentView){
+        ViewTreeObserver vto = contentView.getViewTreeObserver();
         if(Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN) {
-            contentView.getViewTreeObserver().removeGlobalOnLayoutListener(onGlobalLayoutListener);
+            vto.removeGlobalOnLayoutListener(onGlobalLayoutListener);
         } else {
-            contentView.getViewTreeObserver().removeOnGlobalLayoutListener(onGlobalLayoutListener);
+            vto.removeOnGlobalLayoutListener(onGlobalLayoutListener);
         }
         onGlobalLayoutListener = null;
     }
 
     /** 展示软键盘*/
-    public static boolean showKeyboard(Context context) {
+    public static void showKeyboard(Context context) {
         InputMethodManager imm = (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
         imm.toggleSoftInput(0, InputMethodManager.HIDE_NOT_ALWAYS);
         BULog.v("展示键盘");
-        return true;
     }
 
     /** 关闭软键盘*/

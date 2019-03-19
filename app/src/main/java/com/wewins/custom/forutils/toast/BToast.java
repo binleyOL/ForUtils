@@ -1,8 +1,10 @@
 package com.wewins.custom.forutils.toast;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.graphics.PixelFormat;
 import android.os.Handler;
+import android.support.annotation.ColorInt;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -23,42 +25,40 @@ import java.util.TimerTask;
  */
 public class BToast {
 
-    private static BToast instance;//单例
     /** 自定义toast view的根View*/
     private View mToastView;
     /** 文本*/
     private TextView mTextView;
-    /** 记录状态 是否在显示。true=已显示*/
-    private Boolean mIsShowing;
     /** 定时器：显示后开始计时，时间到了后，隐藏Toast*/
     private Timer mTimer;
     /** Toast的布局参数*/
     private WindowManager.LayoutParams mParams;
     private WindowManager mWdm;
     private Handler mHandle;
+    private ToastText mToastText;
 
+    /** 记录状态 是否在显示。true=已显示*/
+    private Boolean mIsShowing;
     /** 显示延时时间*/
     private int mShowTime = Toast.LENGTH_SHORT;
     private String mText;
     private float textSize;
+    private int textColor;
+    private int textBackgroundColor;
     /** 显示位置*/
     private int[] mGravity = new int[3];
 
-    public synchronized static BToast getInstance(Context context) {
-        if (instance == null)
-            instance = new BToast(context);
-        return instance;
-    }
-
-    private BToast(Context context) {
+    public BToast(Context context) {
         mIsShowing = false;// 记录当前Toast的内容是否已经在显示
         // WindowManager
         mWdm = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
         // 这里初始化toast view
         mToastView = LayoutInflater.from(context).inflate(R.layout.common_toast, null);
         LinearLayout ll = mToastView.findViewById(R.id.rootView);
-        mTextView = ToastText.getText(context);//用来提示的文字
+        mToastText = new ToastText(context);
+        mTextView = mToastText.getTextView();
         textSize = 16;
+        setDefaultType();
         ll.addView(mTextView);
         // 初始化计数器
         mTimer = new Timer();
@@ -74,13 +74,12 @@ public class BToast {
         mParams.height = WindowManager.LayoutParams.WRAP_CONTENT;  //高
         mParams.width = WindowManager.LayoutParams.WRAP_CONTENT;   //宽
         mParams.format = PixelFormat.TRANSLUCENT;
-        mParams.windowAnimations = R.style.custom_animation_toast_aplha;// 设置进入退出动画效果
+        mParams.windowAnimations = com.wewins.custom.forutils.R.style.custom_animation_toast_aplha;// 设置进入退出动画效果
         mParams.type = WindowManager.LayoutParams.TYPE_TOAST;
         mParams.flags = WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
                 | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
                 | WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE;
-        setGravity(Gravity.BOTTOM, 0, 0);        //对其方式
-        mParams.y = 45;      //下间距
+        gravity(Gravity.BOTTOM, 0, 45);        //对其方式
     }
 
     /** 获取定时器可执行线程*/
@@ -91,12 +90,47 @@ public class BToast {
                 mHandle.post(new Runnable() {
                     @Override
                     public void run() {
-                        mWdm.removeView(mToastView);
-                        mIsShowing = false;
+                        try {
+                            mWdm.removeView(mToastView);
+                            mIsShowing = false;
+                        } catch (Exception e) {}
                     }
                 });
             }
         };
+    }
+
+    public BToast errorType() {
+        setErrorType();
+        return this;
+    }
+
+    /** 设置Error样式*/
+    public void setErrorType() {
+        textColor = Color.WHITE;
+        textBackgroundColor = Color.RED;
+    }
+
+    public BToast warningType() {
+        setWarningType();
+        return this;
+    }
+
+    /** 设置Warning样式*/
+    public void setWarningType() {
+        textColor = Color.YELLOW;
+        textBackgroundColor = Color.BLUE;
+    }
+
+    public BToast defaultType() {
+        setDefaultType();
+        return this;
+    }
+
+    /** 设置普通样式*/
+    public void setDefaultType() {
+        textColor = Color.BLACK;
+        textBackgroundColor = Color.WHITE;
     }
 
     /**
@@ -105,25 +139,45 @@ public class BToast {
      * @param xOffset
      * @param yOffset
      */
-    public final void setGravity(int gravity, int xOffset, int yOffset) {
+    public BToast gravity(int gravity, int xOffset, int yOffset) {
         mParams.gravity = gravity;
         mParams.x = xOffset;
-        mParams.y = yOffset;
+        mParams.y = yOffset;//下间距
+        return this;
     }
 
     /**
-     * 设置文字大小
+     * 文字大小
      * @param textSize 单位sp
      */
-    public void setTextSize(float textSize) {
+    public BToast textSize(float textSize) {
         this.textSize = textSize;
+        return this;
+    }
+
+    /**
+     * 文字颜色
+     * @param textColor
+     */
+    public BToast textColor(@ColorInt int textColor) {
+        this.textColor = textColor;
+        return this;
+    }
+
+    /**
+     * 背景颜色
+     * @param backgroundColor
+     */
+    public BToast backgroundColor(@ColorInt int backgroundColor) {
+        this.textBackgroundColor = backgroundColor;
+        return this;
     }
 
     /**
      * 设置延时时间
      * @param duration
      */
-    public final void setShowTime(int duration) {
+    public BToast showTime(int duration) {
         if(duration < 0) {
             mShowTime = Toast.LENGTH_SHORT;
         } else if(duration <= 1){
@@ -131,6 +185,7 @@ public class BToast {
             mShowTime = Toast.LENGTH_SHORT;
         }
         mShowTime = duration;
+        return this;
     }
 
     /**
@@ -168,12 +223,16 @@ public class BToast {
                 // 将其加载到windowManager上
                 mWdm.addView(mToastView, mParams);
             }
-            mText = text;
-            mTextView.setTextSize(textSize);
-            // 设置显示内容
+
+            mToastText.setBackgroundColor(textBackgroundColor);
+            mToastText.setTextColor(textColor);
+            mToastText.setTextSize(textSize);
+            mToastText.commit();
             if(!mText.equals(text)) {
+                // 设置显示内容
                 mTextView.setText(text);
             }
+            mText = text;
         } else {
             // 记录Gravity相关信息
             mGravity[0] = mParams.gravity;
@@ -181,8 +240,12 @@ public class BToast {
             mGravity[2] = mParams.y;
             // 设置显示内容
             mText = text;
-            mTextView.setTextSize(textSize);
+            mToastText.setBackgroundColor(textBackgroundColor);
+            mToastText.setTextColor(textColor);
+            mToastText.setTextSize(textSize);
+            mToastText.commit();
             mTextView.setText(text);
+
             // 设置显示状态
             mIsShowing = true;
             // 将其加载到windowManager上

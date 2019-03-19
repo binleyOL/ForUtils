@@ -26,8 +26,6 @@ public class NetworkChangeReceiver extends BroadcastReceiver {
     public static final String BROADCAST_ACTION_WIFI_CONNECTED = "broadcast action wifi connected";
     public static final String EXTRA_KEY_NETWORK_MODE = "key network mode";
 
-    private int wifiState;//WiFi状态
-    private String networkActionName;//网络名字
     private int wifiConnectionState;//路由有效还是无效
 
     public void onReceive(Context context, Intent intent) {
@@ -35,8 +33,8 @@ public class NetworkChangeReceiver extends BroadcastReceiver {
         if(action.equals(ConnectivityManager.CONNECTIVITY_ACTION)) {
             BULog.i("<获取手机的联网模式>");
             NetworkInfo info = intent.getParcelableExtra(ConnectivityManager.EXTRA_NETWORK_INFO);
-            String connType = BUNetworkAndWifi.getConnType(info);
-            networkActionName = connType;
+            String connType = BUNetworkAndWifi.getConnType(info);// 网络名字
+            sendConnType(context, connType);
         } else if(action.equals(WifiManager.WIFI_STATE_CHANGED_ACTION)) {
             BULog.v("<Wi-Fi变化了>");
             //拿到wifi的状态值
@@ -54,12 +52,12 @@ public class NetworkChangeReceiver extends BroadcastReceiver {
                     break;
                 case WifiManager.WIFI_STATE_ENABLED:
                     BULog.v("-已开Wi-Fi");
+                    sendWifiConnected(context);
                     break;
                 default:
                     BULog.v("其他未知情况");
                     break;
             }
-            this.wifiState = wifiState;
         } else if(action.equals(WifiManager.NETWORK_STATE_CHANGED_ACTION)) {
             BULog.v("<监听wifi的连接状态即是否连接的一个有效的无线路由>");
             Parcelable parcelableExtra = intent.getParcelableExtra(WifiManager.EXTRA_NETWORK_INFO);

@@ -21,7 +21,8 @@ import android.widget.TextView;
 
 
 /**
- * <br/>
+ * 悬浮阴影效果的文字展示控件<br/>
+ *
  * <b color="#008000">Created by Binley at 2019/1/22.<b/>
  */
 public class ToastText {
@@ -45,11 +46,10 @@ public class ToastText {
     private int mShadowRadius;
     private int mShadowXOffset;
     private int mShadowYOffset;
-
     private int mBackgroundColor;
-
     private TextView mTextView;
 
+    /** 默认 Type 为 TYPE_ROUND_RECT， 黑色文字 + 白色背景*/
     public ToastText(Context context) {
         TextView tv = new TextView(context) {
             @Override
@@ -61,13 +61,13 @@ public class ToastText {
         };
         density = context.getResources().getDisplayMetrics().density;
         mTextView = tv;
+        tv.setTextColor(Color.BLACK);
+        tv.setTextSize(16);
         mBackgroundColor = Color.WHITE;//默认白色背景
-
         // 计算宽高差异
         float textHeight = tv.getTextSize();//Paint Size
         float textWidth = textHeight / 4;
         mDiffWH = (int) (Math.abs(textHeight - textWidth) / 2);
-
         // 设置 TextView 的 Padding
         mShadowRadius = (int) (density * SHADOW_RADIUS);// 阴影半径
         mShadowXOffset = (int) (density * X_OFFSET);
@@ -81,12 +81,40 @@ public class ToastText {
         return mTextView;
     }
 
-    /** 更换文字控件的背景颜色*/
+    /** 设置文字*/
+    public void setText(CharSequence text) {
+        mTextView.setText(text);
+    }
+
+    /** 更换字体大小*/
+    public void setTextSize(float textSize) {
+        mTextView.setTextSize(textSize);
+    }
+
+    /** 更换字体颜色*/
+    public void setTextColor(@ColorInt int textColor) {
+        mTextView.setTextColor(textColor);
+    }
+
+    /** 更换背景颜色*/
     public void setBackgroundColor(@ColorInt int backgroundColor) {
         mBackgroundColor = backgroundColor;
+    }
+
+    /** 更换背景颜色、字体大小后，需要调用提交*/
+    public void commit() {
+        // 计算宽高差异
+        float textHeight = mTextView.getTextSize();//Paint Size
+        float textWidth = textHeight / 4;
+        mDiffWH = (int) (Math.abs(textHeight - textWidth) / 2);
+
+        int basePadding = mShadowRadius * 3;//调整高度
+        int horizontalPadding = basePadding + mDiffWH;
+        mTextView.setPadding(horizontalPadding, basePadding, horizontalPadding, basePadding);
         refreshBackgroundDrawable(mTextView.getWidth(), mTextView.getHeight());
     }
 
+    /** 刷新背景图*/
     public void refreshBackgroundDrawable(int targetWidth, int targetHeight) {
         //如果文字数大于1
         if(mTextView.length() < 2) {
@@ -104,7 +132,6 @@ public class ToastText {
         if (text == null) {
             return;
         }
-
         if(type == TYPE_CIRCLE) {
             setCircleBackground(targetWidth, targetHeight);
         } else if(type == TYPE_ROUND_RECT) {
@@ -151,12 +178,6 @@ public class ToastText {
         }
     }
 
-    /** 默认 Type 为 TYPE_ROUND_RECT， 白色背景*/
-    public static TextView getText(Context context) {
-        ToastText shapeDrawable = new ToastText(context);
-        return shapeDrawable.getTextView();
-    }
-
     /** 圆圈*/
     private static class OvalShadow extends OvalShape {
         private RadialGradient mRadialGradient;
@@ -175,7 +196,6 @@ public class ToastText {
             super();
             int max = Math.max(width, height);
             int circleDiameter = max - (2 * shadowRadius);
-
             this.mViewWidth = width;
             this.mViewHeight = height;
             this.mShadowRadius = shadowRadius;
@@ -262,8 +282,5 @@ public class ToastText {
             //不透明度
             return PixelFormat.TRANSPARENT;
         }
-
     }
-
-
 }
